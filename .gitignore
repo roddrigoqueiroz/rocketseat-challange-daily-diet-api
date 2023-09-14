@@ -1,0 +1,9 @@
+# Environment
+.env
+
+# Modules
+node_modules
+.vscode
+
+# Database
+database/app.db
