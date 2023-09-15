@@ -10,6 +10,11 @@ declare module 'knex/types/tables' {
       description?: string
       date: Date
       inDiet: boolean
+      session_id: UUID
     }
   }
+}
+
+export interface Params {
+  id: UUID
 }
