@@ -15,3 +15,7 @@ In order to knex work properly, it needs a `knexfile` that it reads to know abou
 
 - To be able to use them, I have to install a node package that is capable of reading the `.env` file
 - The package `dotenv` makes the env variables available in the global variable `process.env`
+
+## Pre-handlers
+
+- If I want to check for a variable before executing a given code (a route call, for example), I should create a middleware function that checks if the data is valid or not. If it isn't, thent I should return from the function, else, do nothing
