@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { checkSessionId } from '../middlewares/check-if-session-id-exists'
 import { checkUrlId } from '../middlewares/check-url-id'
 import { Params } from '../@types/types'
+import { request } from 'http'
 
 export async function meal(app: FastifyInstance) {
   // List all meals
@@ -34,6 +35,61 @@ export async function meal(app: FastifyInstance) {
     },
   )
 
+  // Counts the total number of meals a given user has created
+  app.get(
+    '/total',
+    { preHandler: [checkSessionId] },
+    async (request, reply) => {
+      const cookie = request.cookies.session_id
+
+      const totalMeals = await knex('meal')
+        .where('session_id', cookie)
+        .count('id', { as: 'total meals' })
+        .first()
+
+      return reply.code(200).send(totalMeals)
+    },
+  )
+
+  // Counts the amount of meals in and out of the diet
+  app.get(
+    '/total-in-diet',
+    { preHandler: [checkSessionId] },
+    async (request, reply) => {
+      const cookie = request.cookies.session_id
+
+      const checkQuery = z.object({
+        inDiet: z.string(),
+      })
+
+      const _query = checkQuery.parse(request.query)
+      const query = { inDiet: _query.inDiet === 'true' }
+
+      const totalMeals = await knex('meal')
+        .where('session_id', cookie)
+        .andWhere('inDiet', query.inDiet)
+        .count('id', { as: 'total' })
+
+      return reply.code(200).send(totalMeals)
+    },
+  )
+
+  // Gives the best meal sequence, considering the date column
+  app.get(
+    '/best-meal-sequence',
+    { preHandler: [checkSessionId] },
+    async (request, reply) => {
+      const cookie = request.cookies.session_id
+
+      const bestMealSequence = await knex('meal')
+        .where('session_id', cookie)
+        .andWhere('inDiet', true)
+        .orderBy('date', 'desc')
+
+      return reply.code(200).send(bestMealSequence)
+    },
+  )
+
   // Create a new meal
   app.post('/', async (request, reply) => {
     const checkBodyType = z.object({
@@ -48,7 +104,6 @@ export async function meal(app: FastifyInstance) {
     if (!parse.success) return reply.code(400).send('Wrong body arguments')
 
     const mealData = parse.data
-
     let sessionId = request.cookies.session_id
 
     if (!sessionId) {
@@ -86,7 +141,7 @@ export async function meal(app: FastifyInstance) {
     },
   )
 
-  // TODO
+  // Updates a meal by ID
   app.put(
     '/:id',
     { preHandler: [checkSessionId, checkUrlId] },
@@ -94,6 +149,29 @@ export async function meal(app: FastifyInstance) {
       const { id } = request.params as Params
 
       const cookie = request.cookies.session_id
+
+      const newDataToParse = z.object({
+        name: z.string().optional(),
+        description: z.string().optional(),
+        date: z.string().optional(),
+        inDiet: z.boolean().optional(),
+      })
+
+      const _newData = newDataToParse.parse(request.body)
+
+      const newData = {
+        name: _newData.name,
+        description: _newData.description,
+        date: _newData.date ? new Date(_newData.date) : undefined,
+        inDiet: _newData.inDiet,
+      }
+
+      await knex('meal')
+        .where('id', id)
+        .andWhere('session_id', cookie)
+        .update(newData)
+
+      return reply.code(200).send()
     },
   )
 }
