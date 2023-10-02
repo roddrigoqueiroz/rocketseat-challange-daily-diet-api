@@ -5,7 +5,6 @@ import { z } from 'zod'
 import { checkSessionId } from '../middlewares/check-if-session-id-exists'
 import { checkUrlId } from '../middlewares/check-url-id'
 import { Params } from '../@types/types'
-import { request } from 'http'
 
 export async function meal(app: FastifyInstance) {
   // List all meals

@@ -1,5 +1,6 @@
 # Environment
 .env
+.env.test
 
 # Modules
 node_modules
@@ -7,3 +8,4 @@ node_modules
 
 # Database
 database/app.db
+database/test.db
